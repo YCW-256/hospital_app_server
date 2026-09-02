@@ -1,0 +1,68 @@
+# Qt编译目录
+build/
+Build/
+
+# Qt工程配置缓存
+*.pro.user
+*.pro.user.*
+
+# IDE配置目录
+.idea/
+.vscode/
+
+# 编译产物
+*.obj
+*.o
+*.moc
+
+# Visual Studio 编译输出
+bin/
+obj/
+Debug/
+Release/
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# 中间文件
+*.obj
+*.pch
+*.idb
+*.ipdb
+*.iobj
+*.tlog
+*.log
+*.lastbuildstate
+
+# 用户设置和本地缓存
+.vs/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.db
+*.vsp
+*.vspx
+*.psess
+*.coverage
+*.coveragexml
+
+# 预编译头文件和资源
+*.res
+*.rc
+*.manifest
+
+# 测试结果
+TestResults/
+*.trx
+
+# 打包文件
+*.nupkg
+*.snk
+
+# 平台工具集（非通用）
+*.vcxproj.user
+*.filters
