@@ -6,6 +6,7 @@
 #include "CData.h"
 #include <string.h>
 #include <vector>
+#include "UserModel.h"
 using namespace std;
 
 class BusinessTask

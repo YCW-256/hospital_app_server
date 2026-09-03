@@ -459,6 +459,51 @@ bool UserModel::patient_get_doctor(vector<patient_doctor_infoo>& doctors) {
     return result;
 }
 
+bool UserModel::patient_set_app(const int& doctor_id, const int& patient_id, const string& date_time, const int ob_time)
+{
+    Connection* conn = nullptr;
+    PreparedStatement* pstmt = nullptr;
+    bool result = false;
+
+    try {
+        conn = DbManager::getInstance().get_connection();
+        conn->setSchema("hospital_db");
+
+        // 设置字符集（临时 Statement，立即释放）
+        Statement* tempStmt = conn->createStatement();
+        tempStmt->execute("SET NAMES utf8mb4");
+        delete tempStmt;
+
+        // 插入预约记录，meet_state 默认为 0（待处理状态）
+        string sql = "INSERT INTO meet_record (doctor_id, patient_id, meet_date, meet_time, meet_state) "
+            "VALUES (?, ?, ?, ?, 0)";
+
+        pstmt = conn->prepareStatement(sql);
+        pstmt->setInt(1, doctor_id);
+        pstmt->setInt(2, patient_id);
+        pstmt->setString(3, date_time);   // 日期格式需为 YYYY-MM-DD
+        pstmt->setInt(4, ob_time);        // 时间段整数
+
+        int affectedRows = pstmt->executeUpdate();
+        if (affectedRows > 0) {
+            result = true;
+            cout << "预约插入成功，影响行数: " << affectedRows << endl;
+        }
+        else {
+            cerr << "预约插入失败，未影响任何行" << endl;
+        }
+    }
+    catch (SQLException& e) {
+        cerr << "数据库异常 code:" << e.getErrorCode()
+            << " msg:" << e.what() << endl;
+        result = false;
+    }
+
+    // 统一释放资源（无结果集，传 nullptr）
+    DbManager::getInstance().close_connection(conn, pstmt, nullptr);
+    return result;
+}
+
 bool UserModel::parseDate(const string& dateStr, tm& tm_out)
 {
     // 格式必须为 "YYYY-MM-DD"
