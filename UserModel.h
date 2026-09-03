@@ -22,6 +22,8 @@ public:
 
 	bool patient_get_doctor(vector<patient_doctor_infoo> &doctors);
 
+	bool patient_set_app(const int &doctor_id, const int& patient_id, const string& date_time, const int ob_time);
+
 	static bool parseDate(const string& dateStr, struct tm& tm_out);
 	
 	

@@ -91,6 +91,7 @@
     <ClCompile Include="PatientRegTask.cpp" />
     <ClCompile Include="RepixGuardTask.cpp" />
     <ClCompile Include="SelectGuardTask.cpp" />
+    <ClCompile Include="SetAppTask.cpp" />
     <ClCompile Include="TaskController.cpp" />
     <ClCompile Include="TcpServer.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -112,6 +113,7 @@
     <ClInclude Include="protecol.h" />
     <ClInclude Include="RepixGuardTask.h" />
     <ClInclude Include="SelectGuardTask.h" />
+    <ClInclude Include="SetAppTask.h" />
     <ClInclude Include="TaskController.h" />
     <ClInclude Include="TcpServer.h" />
     <ClInclude Include="ThreadPool.h" />
