@@ -25,7 +25,8 @@ bool UserModel::db_login(char* nike, char* password)
 	return result;
 }
 
-bool UserModel::doctor_login(const string& account, const string& pwd,int & doctor_id)
+bool UserModel::doctor_login(const string& account, const string& pwd,
+    int & doctor_id,int & doctor_role)
 {
 
 	Connection* conn = nullptr;
@@ -45,7 +46,8 @@ bool UserModel::doctor_login(const string& account, const string& pwd,int & doct
 		{
 			result = true;
 			doctor_id = res->getInt("doctor_id");
-			cout << "查询到医生id = " << doctor_id << endl;
+            doctor_role = res->getInt("role");  // 添加这一行，字段名按实际表结构调整
+			cout << "查询到医生id = " << doctor_id << ", 角色 = " << doctor_role << endl;
 		}
 		
 	}

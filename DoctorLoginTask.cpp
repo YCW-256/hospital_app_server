@@ -16,18 +16,21 @@ void DoctorLoginTask::execute()
 	UserModel login_model;
 	int doctor_id = -1;
 	int result = 0;
-	if (result=login_model.doctor_login(account, pwd, doctor_id)) {
+	int doctor_role = -1;
+	if (result=login_model.doctor_login(account, pwd, doctor_id, doctor_role)) {
 		cout << "登录成功" <<"result" <<result<< endl;
 	}
 	DOCTOR_LOGIN_RESP resp;
 	resp.id = doctor_id;
 	resp.result = result;
+	resp.role = doctor_role;
 	HEAD head;
 	head.len = sizeof(resp);
 	head.type = SERVICE_TYPE::DOCTOR_LOGIN;
 	char buf[1024]="";
 	memcpy(buf,&head,sizeof(head));
 	memcpy(buf+sizeof(head), &resp, sizeof(resp));
+	cout << "发送权限" << resp.role << endl;
 	int len = send(m_fd, buf, sizeof(resp)+sizeof(head), 0);
 	if (len < 0)
 	{

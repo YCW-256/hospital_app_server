@@ -33,6 +33,7 @@ typedef struct {
     int login_style;
     char account[20];
     char pwd[20];
+    
 
 }DOCTOR_LOGIN_REQ;
 
@@ -40,6 +41,7 @@ typedef struct {
     int id;
     int result;
     char pwd[20];
+    int role;
 
 }DOCTOR_LOGIN_RESP;
 //医生获得预约

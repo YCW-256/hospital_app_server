@@ -8,7 +8,7 @@ public:
 	//医生
 	bool db_login(char* name, char* password);
 	
-	bool doctor_login(const string& account, const string& pwd,int& doctor_id);
+	bool doctor_login(const string& account, const string& pwd,int& doctor_id,int& doctor_role);
 
 	bool doctor_get_meet(int id, int style, char patient_name[][15], char time[][15], int state[],int &count);
 	
