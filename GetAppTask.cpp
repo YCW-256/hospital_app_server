@@ -15,10 +15,11 @@ void GetAppTask::execute()
 	char name[10][15];
 	char time[10][15];
 	int state[10];
+	int meet_id[10];
 	UserModel u;
 	//cout << "进入模型" << endl;
 	int count;
-	u.doctor_get_meet(id,style,name,time,state,count);
+	u.doctor_get_meet(id,style,name,time,state,count,meet_id);
 	
 	//resp返回
 	DOCTOR_APP_RESP resp;
@@ -26,6 +27,7 @@ void GetAppTask::execute()
 	memcpy(resp.PatientName, name, sizeof(name));
 	memcpy(resp.time, time, sizeof(time));
 	memcpy(resp.state, state, sizeof(state));
+	memcpy(resp.meet_id, meet_id, sizeof(meet_id));
 	HEAD head;
 	head.len = sizeof(resp);
 	head.is_fragment = false;

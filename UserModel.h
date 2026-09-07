@@ -10,7 +10,7 @@ public:
 	
 	bool doctor_login(const string& account, const string& pwd,int& doctor_id,int& doctor_role);
 
-	bool doctor_get_meet(int id, int style, char patient_name[][15], char time[][15], int state[],int &count);
+	bool doctor_get_meet(int id, int style, char patient_name[][15], char time[][15], int state[],int &count, int meet_id[]);
 	
 	bool get_depart_info(const string& department,std::vector<DOCCTOR_INFO>& res);
 

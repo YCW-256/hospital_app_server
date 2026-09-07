@@ -36,13 +36,16 @@ bool ManagerModel::to_repix_guard(const vector<GUARD_REPIX_T>& repixs, int size)
 
         for (int i = 0; i < count; ++i) {
             const GUARD_REPIX_T& item = repixs[i];
-
+            
             string dateStr = item.date;
             int obTime = item.time;
             string department = item.depart;   // char[] -> string
             int doctorId = item.id;
             bool isFree = item.isfree;
-
+            if (doctorId == 0)
+            {
+                continue;
+            }
             // 1) 查询是否存在（加入 department）
             pstmtCheck->setString(1, dateStr);
             pstmtCheck->setInt(2, obTime);

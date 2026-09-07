@@ -61,7 +61,7 @@ bool UserModel::doctor_login(const string& account, const string& pwd,
 	
 }
 
-bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char time[][15], int state[], int& count)
+bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char time[][15], int state[], int& count, int meet_id[])
 {
     Connection* conn = nullptr;
     PreparedStatement* pstmt = nullptr;
@@ -76,21 +76,21 @@ bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char
         string sql;
         // 0: 今天, 1: 前七天(含今天), 2: 前一个月(含今天)
         if (style == 0) {
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? AND m.meet_date = CURDATE() "
                 "ORDER BY m.meet_time DESC";
         }
         else if (style == 1) {
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? AND m.meet_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) "
                 "ORDER BY m.meet_date DESC, m.meet_time DESC";
         }
         else if (style == 2) {
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? AND m.meet_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH) "
@@ -99,7 +99,7 @@ bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char
         else {
             // 如果 style 不在 0,1,2 范围内，可按需处理（比如返回全量，或直接返回 false）
             // 这里暂定为返回全量并倒序，防止调用处报错
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? "
@@ -129,6 +129,9 @@ bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char
 
             // 会诊状态
             state[index] = res->getInt("meet_state");
+
+            // 新增：会诊ID
+            meet_id[index] = res->getInt("meet_id");
 
             cout << "【记录】:" << patient_name[index] << " " << time[index] << endl;
             index++;
