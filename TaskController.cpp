@@ -8,6 +8,9 @@
 #include "PatientLoginTask.h"
 #include "PatientGetDoctorTask.h"
 #include "SetAppTask.h"
+#include "SetRecordTask.h"
+#include "GetMedicalRecordTask.h"
+#include "GetMedicalRecordDetailTask.h"
 ThreadPool TaskController::thread_pool(5);
 
 BusinessTask* TaskController::create_task(SERVICE_TYPE type, void* data, int size, int fd)
@@ -60,8 +63,21 @@ BusinessTask* TaskController::create_task(SERVICE_TYPE type, void* data, int siz
 		task = new SetAppTask(data, size, fd);
 		thread_pool.submit(task);
 	}
-	
-
+	else if (type == SERVICE_TYPE::DOCTOR_SET_RECORD) {
+		cout << "设置病历" << endl;
+		task = new SetRecordTask(data, size, fd);
+		thread_pool.submit(task);
+	}
+	else if (type == SERVICE_TYPE::GET_MEDICAL_RECORD) {
+		cout << "获取病历列表" << endl;
+		task = new GetMedicalRecordTask(data, size, fd);
+		thread_pool.submit(task);
+	}
+	else if (type == SERVICE_TYPE::GET_MEDICAL_RECORD_DETAIL) {
+		cout << "获取病历详情" << endl;
+		task = new GetMedicalRecordDetailTask(data, size, fd);
+		thread_pool.submit(task);
+	}
 
 
 	//if (type == SERVICE_TYPE::WARNING) {

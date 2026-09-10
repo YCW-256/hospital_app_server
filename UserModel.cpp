@@ -61,7 +61,7 @@ bool UserModel::doctor_login(const string& account, const string& pwd,
 	
 }
 
-bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char time[][15], int state[], int& count, int meet_id[])
+bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char time[][15], int state[], int& count, int meet_id[], int patient_id[])
 {
     Connection* conn = nullptr;
     PreparedStatement* pstmt = nullptr;
@@ -76,21 +76,21 @@ bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char
         string sql;
         // 0: 今天, 1: 前七天(含今天), 2: 前一个月(含今天)
         if (style == 0) {
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id, m.patient_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? AND m.meet_date = CURDATE() "
                 "ORDER BY m.meet_time DESC";
         }
         else if (style == 1) {
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id, m.patient_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? AND m.meet_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) "
                 "ORDER BY m.meet_date DESC, m.meet_time DESC";
         }
         else if (style == 2) {
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id, m.patient_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? AND m.meet_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH) "
@@ -99,7 +99,7 @@ bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char
         else {
             // 如果 style 不在 0,1,2 范围内，可按需处理（比如返回全量，或直接返回 false）
             // 这里暂定为返回全量并倒序，防止调用处报错
-            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id "
+            sql = "SELECT p.patient_name AS patient_name, m.meet_date, m.meet_time, m.meet_state, m.meet_id, m.patient_id "
                 "FROM meet_record m "
                 "JOIN patients p ON m.patient_id = p.patient_id "
                 "WHERE m.doctor_id = ? "
@@ -130,8 +130,11 @@ bool UserModel::doctor_get_meet(int id, int style, char patient_name[][15], char
             // 会诊状态
             state[index] = res->getInt("meet_state");
 
-            // 新增：会诊ID
+            // 会诊ID
             meet_id[index] = res->getInt("meet_id");
+
+            // 新增：病人ID
+            patient_id[index] = res->getInt("patient_id");
 
             cout << "【记录】:" << patient_name[index] << " " << time[index] << endl;
             index++;
@@ -509,6 +512,84 @@ bool UserModel::patient_set_app(const int& doctor_id, const int& patient_id, con
     return result;
 }
 
+bool UserModel::set_record(const int& doctor_id, const int& patient_id, const string& diagnosis, const string& treat_plan)
+{
+    Connection* conn = nullptr;
+    PreparedStatement* pstmt = nullptr;
+    ResultSet* res = nullptr;
+    bool result = false;
+
+    try {
+        conn = DbManager::getInstance().get_connection();
+        conn->setSchema("hospital_db");
+
+        // 开启事务
+        conn->setAutoCommit(false);
+
+        // ---------- 任务1：更新 meet_record 状态 ----------
+        int meet_id = -1;
+        // 查找该医生和患者最近一条未完成的会诊记录
+        string findSql =
+            "SELECT meet_id FROM meet_record "
+            "WHERE doctor_id = ? AND patient_id = ? AND meet_state = 0 "
+            "ORDER BY meet_date DESC, meet_time DESC LIMIT 1";
+        pstmt = conn->prepareStatement(findSql);
+        pstmt->setInt(1, doctor_id);
+        pstmt->setInt(2, patient_id);
+        res = pstmt->executeQuery();
+        if (res->next()) {
+            meet_id = res->getInt("meet_id");
+        }
+        // 释放查询资源
+        DbManager::getInstance().close_connection(nullptr, pstmt, res);
+        pstmt = nullptr;
+        res = nullptr;
+
+        if (meet_id != -1) {
+            string updateSql = "UPDATE meet_record SET meet_state = 1 WHERE meet_id = ?";
+            pstmt = conn->prepareStatement(updateSql);
+            pstmt->setInt(1, meet_id);
+            pstmt->executeUpdate();
+            // 释放更新资源
+            DbManager::getInstance().close_connection(nullptr, pstmt, nullptr);
+            pstmt = nullptr;
+        }
+
+        // ---------- 任务2：插入 medical_record ----------
+        string insertSql =
+            "INSERT INTO medical_record "
+            "(patient_id, doctor_id, main_symptom, diagnosis, treat_plan, record_time, state, create_time, update_time) "
+            "VALUES (?, ?, NULL, ?, ?, NOW(), 0, NOW(), NOW())";
+        pstmt = conn->prepareStatement(insertSql);
+        pstmt->setInt(1, patient_id);
+        pstmt->setInt(2, doctor_id);
+        pstmt->setString(3, diagnosis);
+        pstmt->setString(4, treat_plan);
+        pstmt->executeUpdate();
+
+        // 提交事务
+        conn->commit();
+        result = true;
+
+    }
+    catch (SQLException& e) {
+        cerr << "数据库异常 code:" << e.getErrorCode() << " msg:" << e.what() << endl;
+        if (conn) {
+            try {
+                conn->rollback();   // 回滚事务
+            }
+            catch (SQLException& ex) {
+                cerr << "回滚失败: " << ex.what() << endl;
+            }
+        }
+        result = false;
+    }
+
+    // 最终释放连接和未释放的语句
+    DbManager::getInstance().close_connection(conn, pstmt, res);
+    return result;
+}
+
 bool UserModel::parseDate(const string& dateStr, tm& tm_out)
 {
     // 格式必须为 "YYYY-MM-DD"
@@ -524,4 +605,154 @@ bool UserModel::parseDate(const string& dateStr, tm& tm_out)
     // 注意：tm_isdst 设为 -1 让 mktime 自动判断夏令时
     tm_out.tm_isdst = -1;
     return true;
+}
+
+bool UserModel::get_medical_records(const MEDICAL_RECORD_REQ& req, GET_MEDICAL_RECORD_RESP& resp)
+{
+    Connection* conn = nullptr;
+    PreparedStatement* count_stmt = nullptr;
+    PreparedStatement* list_stmt = nullptr;
+    ResultSet* count_res = nullptr;
+    ResultSet* list_res = nullptr;
+    bool result = false;
+
+    memset(&resp, 0, sizeof(resp));
+
+    try {
+        conn = DbManager::getInstance().get_connection();
+        conn->setSchema("hospital_db");
+
+        string where = " WHERE m.doctor_id = ?";
+        if (req.state == 0 || req.state == 1)
+            where += " AND m.state = ?";
+        if (req.patient_name[0] != '\0')
+            where += " AND p.patient_name LIKE ?";
+        if (req.date_begin[0] != '\0')
+            where += " AND DATE(m.record_time) >= ?";
+        if (req.date_end[0] != '\0')
+            where += " AND DATE(m.record_time) <= ?";
+
+        string from = " FROM medical_record m JOIN patients p ON m.patient_id = p.patient_id";
+
+        count_stmt = conn->prepareStatement("SELECT COUNT(*)" + from + where);
+        int parameter = 1;
+        count_stmt->setInt(parameter++, req.doctor_id);
+        if (req.state == 0 || req.state == 1)
+            count_stmt->setInt(parameter++, req.state);
+        if (req.patient_name[0] != '\0')
+            count_stmt->setString(parameter++, string("%") + req.patient_name + "%");
+        if (req.date_begin[0] != '\0')
+            count_stmt->setString(parameter++, req.date_begin);
+        if (req.date_end[0] != '\0')
+            count_stmt->setString(parameter++, req.date_end);
+        count_res = count_stmt->executeQuery();
+        if (count_res->next())
+            resp.total = count_res->getInt(1);
+        DbManager::getInstance().close_connection(nullptr, count_stmt, count_res);
+        count_stmt = nullptr;
+        count_res = nullptr;
+
+        string sql = "SELECT m.record_id, m.patient_id, m.state, p.patient_name, "
+            "DATE_FORMAT(m.record_time, '%Y-%m-%d %H:%i:%s') AS record_time, "
+            "m.main_symptom" + from + where +
+            " ORDER BY m.record_time DESC, m.record_id DESC LIMIT ?";
+        list_stmt = conn->prepareStatement(sql);
+        parameter = 1;
+        list_stmt->setInt(parameter++, req.doctor_id);
+        if (req.state == 0 || req.state == 1)
+            list_stmt->setInt(parameter++, req.state);
+        if (req.patient_name[0] != '\0')
+            list_stmt->setString(parameter++, string("%") + req.patient_name + "%");
+        if (req.date_begin[0] != '\0')
+            list_stmt->setString(parameter++, req.date_begin);
+        if (req.date_end[0] != '\0')
+            list_stmt->setString(parameter++, req.date_end);
+        list_stmt->setInt(parameter, MEDICAL_RECORD_MAX_ITEMS);
+        list_res = list_stmt->executeQuery();
+
+        while (list_res->next() && resp.count < MEDICAL_RECORD_MAX_ITEMS) {
+            MEDICAL_RECORD_LIST_ITEM& item = resp.items[resp.count];
+            item.record_id = list_res->getInt("record_id");
+            item.patient_id = list_res->getInt("patient_id");
+            item.state = list_res->getInt("state");
+            string patient_name = list_res->getString("patient_name");
+            string record_time = list_res->getString("record_time");
+            string main_symptom = list_res->getString("main_symptom");
+            strncpy(item.patient_name, patient_name.c_str(), sizeof(item.patient_name) - 1);
+            item.patient_name[sizeof(item.patient_name) - 1] = '\0';
+            strncpy(item.record_time, record_time.c_str(), sizeof(item.record_time) - 1);
+            item.record_time[sizeof(item.record_time) - 1] = '\0';
+            strncpy(item.main_symptom, main_symptom.c_str(), sizeof(item.main_symptom) - 1);
+            item.main_symptom[sizeof(item.main_symptom) - 1] = '\0';
+            ++resp.count;
+        }
+
+        result = true;
+    }
+    catch (SQLException& e) {
+        cerr << "数据库异常 code:" << e.getErrorCode() << " msg:" << e.what() << endl;
+    }
+
+    DbManager::getInstance().close_connection(nullptr, list_stmt, list_res);
+    DbManager::getInstance().close_connection(conn, count_stmt, count_res);
+    return result;
+}
+
+bool UserModel::get_medical_record_detail(const MEDICAL_RECORD_DETAIL_REQ& req, MEDICAL_RECORD_DETAIL_RESP& resp)
+{
+    Connection* conn = nullptr;
+    PreparedStatement* pstmt = nullptr;
+    ResultSet* res = nullptr;
+    bool result = false;
+
+    memset(&resp, 0, sizeof(resp));
+
+    try {
+        conn = DbManager::getInstance().get_connection();
+        conn->setSchema("hospital_db");
+        string sql =
+            "SELECT m.record_id, m.patient_id, m.doctor_id, m.state, p.patient_name, "
+            "DATE_FORMAT(m.record_time, '%Y-%m-%d %H:%i:%s') AS record_time, "
+            "d.name AS doctor_name, m.main_symptom, m.diagnosis, m.treat_plan "
+            "FROM medical_record m "
+            "JOIN patients p ON m.patient_id = p.patient_id "
+            "JOIN doctors d ON m.doctor_id = d.doctor_id "
+            "WHERE m.record_id = ? AND m.doctor_id = ?";
+        pstmt = conn->prepareStatement(sql);
+        pstmt->setInt(1, req.record_id);
+        pstmt->setInt(2, req.doctor_id);
+        res = pstmt->executeQuery();
+
+        if (res->next()) {
+            resp.record_id = res->getInt("record_id");
+            resp.patient_id = res->getInt("patient_id");
+            resp.doctor_id = res->getInt("doctor_id");
+            resp.state = res->getInt("state");
+            string patient_name = res->getString("patient_name");
+            string record_time = res->getString("record_time");
+            string doctor_name = res->getString("doctor_name");
+            string main_symptom = res->getString("main_symptom");
+            string diagnosis = res->getString("diagnosis");
+            string treat_plan = res->getString("treat_plan");
+            strncpy(resp.patient_name, patient_name.c_str(), sizeof(resp.patient_name) - 1);
+            resp.patient_name[sizeof(resp.patient_name) - 1] = '\0';
+            strncpy(resp.record_time, record_time.c_str(), sizeof(resp.record_time) - 1);
+            resp.record_time[sizeof(resp.record_time) - 1] = '\0';
+            strncpy(resp.doctor_name, doctor_name.c_str(), sizeof(resp.doctor_name) - 1);
+            resp.doctor_name[sizeof(resp.doctor_name) - 1] = '\0';
+            strncpy(resp.main_symptom, main_symptom.c_str(), sizeof(resp.main_symptom) - 1);
+            resp.main_symptom[sizeof(resp.main_symptom) - 1] = '\0';
+            strncpy(resp.diagnosis, diagnosis.c_str(), sizeof(resp.diagnosis) - 1);
+            resp.diagnosis[sizeof(resp.diagnosis) - 1] = '\0';
+            strncpy(resp.treat_plan, treat_plan.c_str(), sizeof(resp.treat_plan) - 1);
+            resp.treat_plan[sizeof(resp.treat_plan) - 1] = '\0';
+            result = true;
+        }
+    }
+    catch (SQLException& e) {
+        cerr << "数据库异常 code:" << e.getErrorCode() << " msg:" << e.what() << endl;
+    }
+
+    DbManager::getInstance().close_connection(conn, pstmt, res);
+    return result;
 }

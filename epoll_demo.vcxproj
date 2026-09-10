@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -84,6 +84,8 @@
     <ClCompile Include="DoctorLoginTask.cpp" />
     <ClCompile Include="EPollServer.cpp" />
     <ClCompile Include="GetAppTask.cpp" />
+    <ClCompile Include="GetMedicalRecordTask.cpp" />
+    <ClCompile Include="GetMedicalRecordDetailTask.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ManagerModel.cpp" />
     <ClCompile Include="PatientGetDoctorTask.cpp" />
@@ -92,6 +94,7 @@
     <ClCompile Include="RepixGuardTask.cpp" />
     <ClCompile Include="SelectGuardTask.cpp" />
     <ClCompile Include="SetAppTask.cpp" />
+    <ClCompile Include="SetRecordTask.cpp" />
     <ClCompile Include="TaskController.cpp" />
     <ClCompile Include="TcpServer.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -106,6 +109,8 @@
     <ClInclude Include="DoctorLoginTask.h" />
     <ClInclude Include="EPollServer.h" />
     <ClInclude Include="GetAppTask.h" />
+    <ClInclude Include="GetMedicalRecordTask.h" />
+    <ClInclude Include="GetMedicalRecordDetailTask.h" />
     <ClInclude Include="ManagerModel.h" />
     <ClInclude Include="PatientGetDoctorTask.h" />
     <ClInclude Include="PatientLoginTask.h" />
@@ -114,6 +119,7 @@
     <ClInclude Include="RepixGuardTask.h" />
     <ClInclude Include="SelectGuardTask.h" />
     <ClInclude Include="SetAppTask.h" />
+    <ClInclude Include="SetRecordTask.h" />
     <ClInclude Include="TaskController.h" />
     <ClInclude Include="TcpServer.h" />
     <ClInclude Include="ThreadPool.h" />
