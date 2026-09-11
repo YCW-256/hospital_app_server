@@ -23,7 +23,7 @@ enum SERVICE_TYPE {
 
     GET_MEDICAL_RECORD,        //病历【第一套·列表】按 do
     GET_MEDICAL_RECORD_DETAIL, //病历【第二套·
-
+    IMG_UPLOAD,                 //舌苔图片上传
 
 
 };
@@ -241,5 +241,13 @@ typedef struct {
     char treat_plan[200];    // 治疗方案
 }MEDICAL_RECORD_DETAIL_RESP;
 
+typedef struct {
+    int index;
+    int total;
+    int width;
+    int height;
+    char img_data[8192];
+	char file_name[100];
+}IMG_T;
 
 #endif // PROTECOL_H

@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 #include <map>
 #include <vector>
-#define MAX_SIZE 4048
+#define MAX_SIZE 16384
 using namespace std;
 
 

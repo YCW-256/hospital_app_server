@@ -123,7 +123,7 @@ void EPollServer::start()
 				char* buf = client_fs[fd].buf;
 				int* read_len = &client_fs[fd].read_len;
 				int* use_len = &client_fs[fd].use_len;
-				char data_buf[1024];
+				char data_buf[MAX_SIZE];
 				while (1) {
 					int now_size = *read_len;//方便使用 recv_len值
 					int len = recv(fd, buf + now_size, MAX_SIZE - 1 - now_size, 0);

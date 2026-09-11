@@ -11,12 +11,13 @@
 #include "SetRecordTask.h"
 #include "GetMedicalRecordTask.h"
 #include "GetMedicalRecordDetailTask.h"
+#include "FileTask.h"
 ThreadPool TaskController::thread_pool(5);
 
 BusinessTask* TaskController::create_task(SERVICE_TYPE type, void* data, int size, int fd)
 {   
 	
-	cout << "创建任务" << endl;
+	cout << "创建任务(含文件)" << endl;
 	BusinessTask* task = nullptr;
 	
 	if (type == SERVICE_TYPE::DOCTOR_LOGIN) {
@@ -78,7 +79,11 @@ BusinessTask* TaskController::create_task(SERVICE_TYPE type, void* data, int siz
 		task = new GetMedicalRecordDetailTask(data, size, fd);
 		thread_pool.submit(task);
 	}
-
+	else if(type==SERVICE_TYPE::IMG_UPLOAD) {
+		cout << "获取文件传输任务" << endl;
+		task = new FileTask(data, size, fd);
+		thread_pool.submit(task);
+	}
 
 	//if (type == SERVICE_TYPE::WARNING) {
 
