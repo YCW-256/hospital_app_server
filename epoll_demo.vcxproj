@@ -87,6 +87,7 @@
     <ClCompile Include="GetAppTask.cpp" />
     <ClCompile Include="GetMedicalRecordTask.cpp" />
     <ClCompile Include="GetMedicalRecordDetailTask.cpp" />
+    <ClCompile Include="GetTongueImgTask.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ManagerModel.cpp" />
     <ClCompile Include="PatientGetDoctorTask.cpp" />
@@ -113,6 +114,7 @@
     <ClInclude Include="GetAppTask.h" />
     <ClInclude Include="GetMedicalRecordTask.h" />
     <ClInclude Include="GetMedicalRecordDetailTask.h" />
+    <ClInclude Include="GetTongueImgTask.h" />
     <ClInclude Include="ManagerModel.h" />
     <ClInclude Include="PatientGetDoctorTask.h" />
     <ClInclude Include="PatientLoginTask.h" />

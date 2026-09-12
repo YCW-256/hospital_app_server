@@ -12,6 +12,7 @@
 #include "GetMedicalRecordTask.h"
 #include "GetMedicalRecordDetailTask.h"
 #include "FileTask.h"
+#include "GetTongueImgTask.h"
 ThreadPool TaskController::thread_pool(5);
 
 BusinessTask* TaskController::create_task(SERVICE_TYPE type, void* data, int size, int fd)
@@ -82,6 +83,11 @@ BusinessTask* TaskController::create_task(SERVICE_TYPE type, void* data, int siz
 	else if(type==SERVICE_TYPE::IMG_UPLOAD) {
 		cout << "获取文件传输任务" << endl;
 		task = new FileTask(data, size, fd);
+		thread_pool.submit(task);
+	}
+	else if(type==SERVICE_TYPE::GET_TONGUE_IMG) {
+		cout << "医生获取舌诊图片" << endl;
+		task = new GetTongueImgTask(data, size, fd);
 		thread_pool.submit(task);
 	}
 

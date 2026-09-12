@@ -25,6 +25,38 @@ bool UserModel::db_login(char* nike, char* password)
 	return result;
 }
 
+bool UserModel::get_img_path(int patient_id, const string& date, string& path)
+{
+    Connection* conn = nullptr;
+    PreparedStatement* pstmt = nullptr;
+    ResultSet* res = nullptr;
+    bool result = false;
+
+    try {
+        conn = DbManager::getInstance().get_connection();
+        conn->setSchema("hospital_db");
+
+        string sql =
+            "SELECT img_path FROM patient_images "
+            "WHERE patient_id = ? AND img_date = ? LIMIT 1";
+        pstmt = conn->prepareStatement(sql);
+        pstmt->setInt(1, patient_id);
+        pstmt->setString(2, date);
+        res = pstmt->executeQuery();
+        if (res->next()) {
+            path = res->getString("img_path");
+            result = !path.empty();
+        }
+    }
+    catch (SQLException& e) {
+        cerr << "数据库异常 code:" << e.getErrorCode()
+            << " msg:" << e.what() << endl;
+    }
+
+    DbManager::getInstance().close_connection(conn, pstmt, res);
+    return result;
+}
+
 bool UserModel::doctor_login(const string& account, const string& pwd,
     int & doctor_id,int & doctor_role)
 {

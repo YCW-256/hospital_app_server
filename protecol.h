@@ -24,10 +24,11 @@ enum SERVICE_TYPE {
     GET_MEDICAL_RECORD,        //病历【第一套·列表】按 do
     GET_MEDICAL_RECORD_DETAIL, //病历【第二套·
     IMG_UPLOAD,                 //舌苔图片上传
+    GET_TONGUE_IMG, 
 
 
 };
-
+            
 typedef struct {
     SERVICE_TYPE type;
     int is_fragment;
@@ -252,5 +253,11 @@ typedef struct {
     int id;
 }IMG_T;
 #pragma pack(pop)
+
+typedef struct {
+    int  doctor_id;       // 接诊医生 id（取 CData::m_id / MeetRecord::doctor_id）
+    int  patient_id;      // 患者 id（DOCTOR_APP_RESP.patient_id）
+    char date[20];        // 就诊日期 yyyy-MM-dd（从预约时间串里取日期部分）
+}GET_TONGUE_IMG_REQ;      // sizeof == 28（字段全是 4 的倍数，无隐藏填充）
 
 #endif // PROTECOL_H
