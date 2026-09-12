@@ -241,13 +241,16 @@ typedef struct {
     char treat_plan[200];    // 治疗方案
 }MEDICAL_RECORD_DETAIL_RESP;
 
+#pragma pack(push, 1)
 typedef struct {
     int index;
     int total;
     int width;
     int height;
     char img_data[8192];
-	char file_name[100];
+    char file_name[100];
+    int id;
 }IMG_T;
+#pragma pack(pop)
 
 #endif // PROTECOL_H

@@ -756,3 +756,38 @@ bool UserModel::get_medical_record_detail(const MEDICAL_RECORD_DETAIL_REQ& req, 
     DbManager::getInstance().close_connection(conn, pstmt, res);
     return result;
 }
+
+bool UserModel::set_img_record(const string& path, int id)
+{
+    Connection* conn = nullptr;
+    PreparedStatement* pstmt = nullptr;
+    ResultSet* res = nullptr;
+    bool result = false;
+
+    try {
+        conn = DbManager::getInstance().get_connection();
+        conn->setSchema("hospital_db");
+
+        string sql =
+            "INSERT INTO patient_images (patient_id, img_path, img_date) "
+            "VALUES (?, ?, CURDATE()) "
+            "ON DUPLICATE KEY UPDATE "
+            "img_path = VALUES(img_path), "
+            "img_date = VALUES(img_date)";
+
+        pstmt = conn->prepareStatement(sql);
+        pstmt->setInt(1, id);
+        pstmt->setString(2, path);
+
+        int rows = pstmt->executeUpdate();
+        // 新插入返回 1，更新返回 2，值没变可能返回 0
+        result = (rows >= 0);
+    }
+    catch (SQLException& e) {
+        cerr << "数据库异常 code:" << e.getErrorCode()
+            << " msg:" << e.what() << endl;
+    }
+
+    DbManager::getInstance().close_connection(conn, pstmt, res);
+    return result;
+}

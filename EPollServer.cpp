@@ -126,26 +126,25 @@ void EPollServer::start()
 				char data_buf[MAX_SIZE];
 				while (1) {
 					int now_size = *read_len;//方便使用 recv_len值
-					int len = recv(fd, buf + now_size, MAX_SIZE - 1 - now_size, 0);
+					int len = recv(fd, buf + now_size, MAX_SIZE - now_size, 0);
 
 
-					cout << "len是：" << len << endl;
+					//cout << "len是：" << len << endl;
 					if (len > 0) {
 						*read_len = now_size + len;
-						cout << "当前read_len: " << (*read_len) << endl;
-						if (*read_len >= MAX_SIZE - 1) {
-							rule_client_f(client_fs[fd]);
-							cout << "【！！！缓冲区满，进行规范！！！】"<<endl;
-						}
-
+						//cout << "当前read_len: " << (*read_len) << endl;
+						//if (*read_len >= MAX_SIZE ) {
+						//	rule_client_f(client_fs[fd]);
+						//	cout << "【！！！缓冲区满，进行规范！！！】"<<endl;
+						//}
 						while ((*read_len) - (*use_len) >= sizeof(HEAD)) {//如果数据足够包   先取出包，暂且不偏移数据指针
-							cout << "【服务端】收到头了" << endl;
+							//cout << "【服务端】收到头了" << endl;
 							HEAD head;
 							memset(&head, 0, sizeof(head));
 							memcpy(&head, buf + (*use_len), sizeof(head));
-							cout << "头的长度" << head.len << endl;
+							//cout << "头的长度" << head.len << endl;
 							if (head.len + sizeof(head) <= (*read_len) - (*use_len)) {//如果数据足够  包+体 ，这时才偏移数据指针
-								cout << "【服务端】收到包了" << endl;
+								//cout << "【服务端】收到包了" << endl;
 								*use_len = *use_len + sizeof(head);
 								memset(data_buf, 0, sizeof(data_buf));
 								memcpy(data_buf, buf + (*use_len), head.len);
@@ -159,13 +158,15 @@ void EPollServer::start()
 									ChatTask task(data_buf, head.len, fd);
 									task.execute();
 								}*/
-
+								rule_client_f(client_fs[fd]);
 							}
 							else {
+								rule_client_f(client_fs[fd]);
 								break;
 							}
 
 						}
+						
 					}
 					else if (len == 0) {
 						printf("客户端断开%d\n", fd);

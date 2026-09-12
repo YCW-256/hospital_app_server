@@ -34,10 +34,13 @@ void FileTask::execute()
         strnlen(req.file_name, sizeof(req.file_name)));
     if (file_name.empty()) file_name = "unnamed";
 
-    MY_FILE& recv = CData::my_files[file_name];
+    //MY_FILE& recv = CData::my_files[file_name];
 
     int is_con = 1;
+    int is_recv = 0;
     pthread_mutex_lock(&CData::mtx_my_files);
+    MY_FILE& recv = CData::my_files[file_name];
+    CData::total++;
     // 首片记录元数据
     if (recv.total_frags == 0) {
         recv.total_frags = req.total;
@@ -48,15 +51,21 @@ void FileTask::execute()
     // ---------- 2. 存下这一片的像素 ----------
     recv.frags[req.index] =
         std::vector<uint8_t>(req.img_data, req.img_data + sizeof(req.img_data));
-    recv.now_size = (int)recv.frags.size();
+    //recv.now_size = (int)recv.frags.size();
+    recv.now_size++;
     // ---------- 3. 没齐就返回 ----------
     if (recv.now_size < recv.total_frags) is_con=0;
-    pthread_mutex_unlock(&CData::mtx_my_files);
+	is_recv = recv.now_size;
+	//cout << "当前已收到 "<< "/" << CData::total << " 个分片\n";
+
     std::cout << "收到包 " << req.index
-        << " 总共收到 " << recv.now_size << "/" << recv.total_frags
-        << " 文件=" << file_name << std::endl;
+        << " 总共收到 " << is_recv << "/" << recv.total_frags
+        << " 文件=" << file_name <<"当前已收到 " << "/" << CData::total << " 个分片 " << std::endl;
+    pthread_mutex_unlock(&CData::mtx_my_files);
+    
     if (!is_con)return;
     // ---------- 4. 收齐了，按 index 顺序拼接 ----------
+	int patient_id = req.id;
     std::vector<uint8_t> full;
     full.reserve((size_t)recv.total_frags * sizeof(req.img_data));
 
@@ -75,7 +84,9 @@ void FileTask::execute()
     if (full.size() > expect) full.resize(expect);
 
     // ---------- 5. 落盘 ----------
-    std::string outPath = "/tmp/MyImgs/" + file_name + ".ppm";
+    std::string outPath = "/MyImgs/" + file_name + ".ppm";
+    UserModel m;
+    m.set_img_record(outPath, patient_id);
     if (savePPM(outPath, full, recv.width, recv.height)) {
         std::cout << "✔ 图片已保存: " << outPath
             << " 大小=" << full.size() << std::endl;

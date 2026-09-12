@@ -39,5 +39,7 @@ public:
 
 	static pthread_mutex_t mtx_my_files;   // ★ 新增：保护 my_files
 
+	static int total;
+
 };
 

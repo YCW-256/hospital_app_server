@@ -28,6 +28,8 @@ public:
 	bool get_medical_records(const MEDICAL_RECORD_REQ& req, GET_MEDICAL_RECORD_RESP& resp);
 	bool get_medical_record_detail(const MEDICAL_RECORD_DETAIL_REQ& req, MEDICAL_RECORD_DETAIL_RESP& resp);
 
+	bool set_img_record(const string &path,int id);
+
 	static bool parseDate(const string& dateStr, struct tm& tm_out);
 	
 	
